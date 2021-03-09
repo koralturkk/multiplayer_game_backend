@@ -1,17 +1,11 @@
 from fastapi import FastAPI
 from ml import nlp
 from models import Article
+from typing import List
+import uvicorn
+
 
 app = FastAPI()
-
-
-from pydantic import BaseModel
-from typing import List
-
-class Article(BaseModel):
-    content: str
-    comments : List[str] = []
-
 
 @app.get("/")
 def read_main():
@@ -28,3 +22,8 @@ def analyze_article(articles: List[Article]):
         for ent in doc.ents:
             ents.append({"text": ent.text, "label": ent.label})
     return {"ents": ents, "comments": comments}
+
+
+# Running of app.
+if __name__ == "__main__":
+    uvicorn.run(app, host="0.0.0.0", port=8000)
