@@ -13,30 +13,36 @@ router = APIRouter(
 )
 
 
+# @router.post("")
+# def analyze_article(articles: List[Article]):
+#     ents = []
+#     comments = []
+#     for article in articles:
+#         for comment in article.comments:
+#             comments.append(comment.upper())
+#         doc = nlp(article.content)
+#         for ent in doc.ents:
+#             ents.append({"text": ent.text, "label": ent.label})
+#     return {"ents": ents, "comments": comments}
 
 
-
-@router.post("/")
-def analyze_article(articles: List[Article]):
-    ents = []
-    comments = []
-    for article in articles:
-        for comment in article.comments:
-            comments.append(comment.upper())
-        doc = nlp(article.content)
-        for ent in doc.ents:
-            ents.append({"text": ent.text, "label": ent.label})
-    return {"ents": ents, "comments": comments}
-
-
-@router.get('/articles')
+@router.get('/{article_id}')
 async def list_articles():
     articles = []
     for article in router.mongodb.find():
         articles.append(Article(**article))
     return {'articles': articles}
 
-@router.post('/articles')
+
+
+@router.get('')
+async def list_articles():
+    articles = []
+    for article in router.mongodb.find():
+        articles.append(Article(**article))
+    return {'articles': articles}
+
+@router.post('')
 async def add_text(article: Article):
     if hasattr(article, 'id'):
         delattr(article, 'id')
