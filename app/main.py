@@ -1,29 +1,16 @@
-from fastapi import FastAPI
-from ml import nlp
-from models import Article
-from typing import List
+
 import uvicorn
+from fastapi import FastAPI
+from .api.api import router as api_router
+from .settings.config import PROJECT_NAME
+from .db.db_utils import close_mongo_connection, connect_to_mongo
 
-
-app = FastAPI()
-
-@app.get("/")
-def read_main():
-    return {"message": "Hello World"}
-
-@app.post("/article/")
-def analyze_article(articles: List[Article]):
-    ents = []
-    comments = []
-    for article in articles:
-        for comment in article.comments:
-            comments.append(comment.upper())
-        doc = nlp(article.content)
-        for ent in doc.ents:
-            ents.append({"text": ent.text, "label": ent.label})
-    return {"ents": ents, "comments": comments}
-
+app = FastAPI(title=PROJECT_NAME)
+app.add_event_handler("startup", connect_to_mongo)
+app.add_event_handler("shutdown", close_mongo_connection)
+app.include_router(api_router)
 
 # Running of app.
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
+
