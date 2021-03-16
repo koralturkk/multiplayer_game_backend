@@ -1,51 +1,42 @@
-from app.models.article import Article
-from typing import List
-from fastapi import APIRouter
-from motor.motor_asyncio import AsyncIOMotorClient
-from app.settings.config import DB_NAME, DB_URL
-from app.core.ml import nlp
+# from typing import Optional
+# from ...core.jwt import get_current_user_authorizer
+
+# from fastapi import APIRouter, Body, Depends, Path, Query
+# from slugify import slugify
+# from starlette.exceptions import HTTPException
+# from ...crud.article import (
+#     get_articles_with_filters,
+# )
+
+# from ...db.mongodb import AsyncIOMotorClient, get_database
+# from ...models.article import (
+#     ArticleFilterParams,
+#     ArticleInCreate,
+#     ArticleInResponse,
+#     ArticleInUpdate,
+#     ManyArticlesInResponse,
+# )
+# from ...models.user import User
+
+# router = APIRouter()
 
 
-router = APIRouter(
-    prefix="/articles",
-    tags=["articles"],
-    responses={404: {"description": "Not found"}},
-)
-
-
-# @router.post("")
-# def analyze_article(articles: List[Article]):
-#     ents = []
-#     comments = []
-#     for article in articles:
-#         for comment in article.comments:
-#             comments.append(comment.upper())
-#         doc = nlp(article.content)
-#         for ent in doc.ents:
-#             ents.append({"text": ent.text, "label": ent.label})
-#     return {"ents": ents, "comments": comments}
-
-
-@router.get('/{article_id}')
-async def list_articles():
-    articles = []
-    for article in router.mongodb.find():
-        articles.append(Article(**article))
-    return {'articles': articles}
-
-
-
-@router.get('')
-async def list_articles():
-    articles = []
-    for article in router.mongodb.find():
-        articles.append(Article(**article))
-    return {'articles': articles}
-
-@router.post('')
-async def add_text(article: Article):
-    if hasattr(article, 'id'):
-        delattr(article, 'id')
-    ret = router.mongodb.insert_one(article.dict(by_alias=True))
-    article.id = ret.inserted_id
-    return {'text_input': article}
+# @router.get("/articles", response_model=ManyArticlesInResponse, tags=["articles"])
+# async def get_articles(
+#         tag: str = "",
+#         author: str = "",
+#         favorited: str = "",
+#         limit: int = Query(20, gt=0),
+#         offset: int = Query(0, ge=0),
+#         user: User = Depends(get_current_user_authorizer(required=False)),
+#         db: AsyncIOMotorClient = Depends(get_database),
+# ):
+#     filters = ArticleFilterParams(
+#         tag=tag, author=author, favorited=favorited, limit=limit, offset=offset
+#     )
+#     dbarticles = await get_articles_with_filters(
+#         db, filters, user.username if user else None
+#     )
+#     return create_aliased_response(
+#         ManyArticlesInResponse(articles=dbarticles, articles_count=len(dbarticles))
+#     )

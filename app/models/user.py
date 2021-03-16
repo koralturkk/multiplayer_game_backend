@@ -1,19 +1,18 @@
 from typing import Optional
 
-from pydantic import EmailStr, UrlStr
+from pydantic import EmailStr
 
-from .mongo_model import MongoModel
-from ..core.security import generate_salt, get_password_hash, verify_password
+from .dbmodel import DBModelMixin
+from .rwmodel import RWModel
+from core.security import generate_salt, get_password_hash, verify_password
 
-
-class UserBase(MongoModel):
+class UserBase(RWModel):
     username: str
     email: EmailStr
     bio: Optional[str] = ""
-    image: Optional[UrlStr] = None
+    image: Optional[str] = None
 
-
-class UserInDB(UserBase):
+class UserInDB(DBModelMixin, UserBase):
     salt: str = ""
     hashed_password: str = ""
 
@@ -24,27 +23,23 @@ class UserInDB(UserBase):
         self.salt = generate_salt()
         self.hashed_password = get_password_hash(self.salt + password)
 
-
 class User(UserBase):
     token: str
 
-
-class UserInResponse(MongoModel):
+class UserInResponse(RWModel):
     user: User
 
 
-class UserInLogin(MongoModel):
+class UserInLogin(RWModel):
     email: EmailStr
     password: str
-
 
 class UserInCreate(UserInLogin):
     username: str
 
-
-class UserInUpdate(MongoModel):
+class UserInUpdate(RWModel):
     username: Optional[str] = None
     email: Optional[EmailStr] = None
     password: Optional[str] = None
     bio: Optional[str] = None
-    image: Optional[UrlStr] = None
+    image: Optional[str] = None
