@@ -7,11 +7,9 @@ from starlette.status import (
     HTTP_404_NOT_FOUND,
     HTTP_422_UNPROCESSABLE_ENTITY,
 )
-
 from .user import get_user, get_user_by_email
 from db.mongodb import AsyncIOMotorClient
 from models.article import ArticleInDB
-
 
 async def check_free_username_and_email(
         conn: AsyncIOMotorClient, username: Optional[str] = None, email: Optional[EmailStr] = None
@@ -31,7 +29,6 @@ async def check_free_username_and_email(
                 detail="User with this email already exists",
             )
 
-
 async def get_article_or_404(
         conn: AsyncIOMotorClient, slug: str, username: Optional[str] = None
 ) -> ArticleInDB:
@@ -42,7 +39,6 @@ async def get_article_or_404(
             detail=f"Article with slug '{slug}' not found",
         )
     return searched_article
-
 
 async def check_article_for_existence_and_modifying_permissions(
         conn: AsyncIOMotorClient, slug: str, username: str = ""

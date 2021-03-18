@@ -1,5 +1,6 @@
 import bcrypt
 from passlib.context import CryptContext
+from jose import JWTError, jwt
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 

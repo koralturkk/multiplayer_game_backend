@@ -8,3 +8,5 @@ motor
 slugify
 bcrypt
 passlib
+python-jose[cryptography]
+passlib[bcrypt]

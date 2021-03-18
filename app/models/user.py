@@ -6,6 +6,12 @@ from .dbmodel import DBModelMixin
 from .rwmodel import RWModel
 from core.security import generate_salt, get_password_hash, verify_password
 
+from fastapi import HTTPException
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+
+from passlib.context import CryptContext
+from .token import Token
+
 class UserBase(RWModel):
     username: str
     email: EmailStr
@@ -24,11 +30,12 @@ class UserInDB(DBModelMixin, UserBase):
         self.hashed_password = get_password_hash(self.salt + password)
 
 class User(UserBase):
-    token: str
+    access_token: str
+    
 
 class UserInResponse(RWModel):
     user: User
-
+    
 
 class UserInLogin(RWModel):
     email: EmailStr
