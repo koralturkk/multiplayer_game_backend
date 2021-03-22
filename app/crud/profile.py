@@ -1,44 +1,77 @@
-from typing import Optional
+from models.profile import ProfileInDB
+from typing import Optional, List
 
 from starlette.exceptions import HTTPException
-from starlette.status import HTTP_404_NOT_FOUND
-
+from starlette.status import (
+    HTTP_403_FORBIDDEN,
+    HTTP_404_NOT_FOUND,
+    HTTP_422_UNPROCESSABLE_ENTITY,
+)
 from crud.user import get_user
 from db.mongodb import AsyncIOMotorClient
-from settings.config import database_name, profiles_collection_name
-from models.profile import Profile
+from core.config import database_name, followers_collection_name, users_collection_name, profiles_collection_name
+from models.profile import Profile, Country
+import datetime
 
 
-async def get_points_of_user(
-    conn: AsyncIOMotorClient, 
-    username: str) -> bool:
-    count = await conn[database_name][profiles_collection_name].count_documents({"follower": username,
-                                                                                  "following": target_username})
-    return count > 0
+async def create_profile_for_user(conn: AsyncIOMotorClient, username: str, country : Country) -> ProfileInDB:
 
-
-async def add_points_to_user(
-    conn: AsyncIOMotorClient, current_username: str, target_username: str
-):
-    await conn[database_name][followers_collection_name].insert_one({"follower": current_username,
-                                                                     "following": target_username})
-
-async def unfollow_user(conn: AsyncIOMotorClient, current_username: str, target_username: str):
-    await conn[database_name][followers_collection_name].delete_many({"follower": current_username,
-                                                                     "following": target_username})
-                                                                     
-async def get_profile_for_user(
-    conn: AsyncIOMotorClient, target_username: str, current_username: Optional[str] = None
-) -> Profile:
-    user = await get_user(conn, target_username)
-    if not user:
+    row = await conn[database_name][profiles_collection_name].find_one({"username": username})
+    if not row:
         raise HTTPException(
-            status_code=HTTP_404_NOT_FOUND, detail=f"User {target_username} not found"
+            status_code=HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Username already has a profile",
         )
 
-    profile = Profile(**user.dict())
-    profile.points = await get_points_of_user(
-        conn, current_username, target_username
-    )
+    dbprofile = ProfileInDB(
+        username = username,
+        points = 0,
+        country = country
+        )
+    dbprofile.created_at = datetime.now()
+    dbprofile.updated_at = datetime.now()
 
-    return profile
+    row = await conn[database_name][profiles_collection_name].insert_one(dbprofile.dict())
+
+    dbprofile.id = row.inserted_id
+
+    return dbprofile
+
+
+async def get_profile_for_user(conn: AsyncIOMotorClient, username: str) -> ProfileInDB:
+    
+    row = await conn[database_name][profiles_collection_name].find_one({"username": username})
+    if not row:
+        raise HTTPException(
+            status_code=HTTP_404_NOT_FOUND,
+            detail="Profile does not exist",
+        )
+
+    return ProfileInDB(**row)
+
+
+# async def is_following_for_user(
+#     conn: AsyncIOMotorClient, current_username: str, target_username: str
+# ) -> bool:
+#     count = await conn[database_name][followers_collection_name].count_documents({"follower": current_username,
+#                                                                                   "following": target_username})
+#     return count > 0
+
+# async def follow_for_user(
+#     conn: AsyncIOMotorClient, current_username: str, target_username: str
+# ):
+#     target_user = await get_user(conn, target_username)
+
+#     if target_user:
+#         await conn[database_name][followers_collection_name].insert_one({"follower": current_username,
+#                                                                          "following": target_user.username})
+#     else:
+#         raise HTTPException(
+#             status_code=HTTP_404_NOT_FOUND, detail=f"User {target_username} not found"
+#         )
+
+
+# async def unfollow_user(conn: AsyncIOMotorClient, current_username: str, target_username: str):
+#     await conn[database_name][followers_collection_name].delete_many({"follower": current_username,
+#                                                                      "following": target_username})
+

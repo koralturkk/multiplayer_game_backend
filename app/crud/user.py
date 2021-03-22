@@ -2,9 +2,10 @@ from db.mongodb import AsyncIOMotorClient
 from pydantic import EmailStr
 from bson.objectid import ObjectId
 from core.config import database_name, users_collection_name
-from models.user import UserInCreate, UserInDB, UserInUpdate
-
-
+from models.user import UserInCreate, UserInDB, UserInUpdate, UserInLogin
+from starlette.status import HTTP_201_CREATED, HTTP_400_BAD_REQUEST
+from starlette.exceptions import HTTPException
+import datetime
 
 
 
@@ -21,12 +22,11 @@ async def get_user_by_email(conn: AsyncIOMotorClient, email: EmailStr) -> UserIn
 async def create_user(conn: AsyncIOMotorClient, user: UserInCreate) -> UserInDB:
     dbuser = UserInDB(**user.dict())
     dbuser.change_password(user.password)
+    dbuser.created_at = datetime.now()
+    dbuser.updated_at = datetime.now()
 
     row = await conn[database_name][users_collection_name].insert_one(dbuser.dict())
-
     dbuser.id = row.inserted_id
-    dbuser.created_at = ObjectId(dbuser.id ).generation_time
-    dbuser.updated_at = ObjectId(dbuser.id ).generation_time
 
     return dbuser
 
@@ -40,8 +40,20 @@ async def update_user(conn: AsyncIOMotorClient, username: str, user: UserInUpdat
     if user.password:
         dbuser.change_password(user.password)
 
-    updated_at = await conn[database_name][users_collection_name]\
-        .update_one({"username": dbuser.username}, {'$set': dbuser.dict()})
-    dbuser.updated_at = updated_at
+    dbuser.updated_at = datetime.now()
+    await conn[database_name][users_collection_name].update_one({"username": dbuser.username}, {'$set': dbuser.dict()})
     return dbuser
 
+
+async def delete_user(conn: AsyncIOMotorClient, user : UserInLogin) -> UserInDB:
+    dbuser = await get_user_by_email(conn, user.email)
+    if not dbuser or not dbuser.check_password(user.password):
+        raise HTTPException(
+            status_code=HTTP_400_BAD_REQUEST, detail="Incorrect username or password"
+        )
+    try:
+        await conn[database_name][users_collection_name].delete_one({"email": user.email})
+    except Exception as e:
+        print(e)
+
+    return dbuser

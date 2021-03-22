@@ -18,14 +18,6 @@ access_token_jwt_subject = "access"
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 
-# def _get_authorization_token(authorization: str = Header(...)):
-#     token_prefix, token = authorization.split(" ")
-#     if token_prefix != JWT_TOKEN_PREFIX:
-#         raise HTTPException(
-#             status_code=HTTP_403_FORBIDDEN, detail="Invalid authorization type"
-#         )
-#     return token
-
 async def get_current_user(db: AsyncIOMotorClient = Depends(get_database), access_token: str = Depends(oauth2_scheme)):
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
@@ -63,30 +55,3 @@ def create_access_token(*, data: dict, expires_delta: Optional[timedelta] = None
 
 
 
-
-# from fastapi import Depends, HTTPException, status
-# from fastapi.security import OAuth2PasswordBearer
-# from blog import token
-
-# oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
-
-
-# def get_current_user(data: str = Depends(oauth2_scheme)):
-#     credentials_exception = HTTPException(
-#         status_code=status.HTTP_401_UNAUTHORIZED,
-#         detail="Could not validate credentials",
-#         headers={"WWW-Authenticate": "Bearer"},
-#     )
-
-#     return token.verify_token(data, credentials_exception)
-
-
-# def verify_token(token: str, credentials_exception):
-#     try:
-#         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-#         email: str = payload.get("sub")
-#         if email is None:
-#             raise credentials_exception
-#         token_data = schemas.TokenData(email=email)
-#     except JWTError:
-#         raise credentials_exception

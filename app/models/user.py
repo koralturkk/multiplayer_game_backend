@@ -32,11 +32,9 @@ class UserInDB(DBModelMixin, UserBase):
 class User(UserBase):
     access_token: str
     
-
 class UserInResponse(RWModel):
     user: User
     
-
 class UserInLogin(RWModel):
     email: EmailStr
     password: str

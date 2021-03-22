@@ -12,6 +12,8 @@ from db.mongodb import AsyncIOMotorClient, get_database
 from models.user import User, UserInCreate, UserInLogin, UserInResponse
 from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
 from models.token import Token
+
+
 router = APIRouter()
 
 
@@ -30,6 +32,7 @@ async def login(
         data={"username": dbuser.username}, expires_delta=access_token_expires
     )
     return {"access_token": token, "token_type": "Bearer"}
+
 
 @router.post(
     "/register",
@@ -50,4 +53,5 @@ async def register(
                 data={"username": dbuser.username}, expires_delta=access_token_expires
             )
 
-            return UserInResponse(user=User(**dbuser.dict(), token=token))
+            return UserInResponse(user=User(**dbuser.dict(), access_token=token))
+

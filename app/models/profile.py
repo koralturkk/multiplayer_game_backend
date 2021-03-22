@@ -1,12 +1,22 @@
-from typing import Optional
-from pydantic.networks import AnyUrl
+from typing import Optional, List
 from .rwmodel import RWModel
+from enum import Enum
+from .dbmodel import DBModelMixin
+
+class Country(str, Enum):
+    Germany = 'DE'
+    Turkey = 'TR'
+    UnitedStates = 'US'
+
 
 class Profile(RWModel):
     username: str
-    bio: Optional[str] = ""
-    image: Optional[AnyUrl] = None
-    following: bool = False
+    points: int = 0
+    following: Optional[List[str]] = []#
+    country: Optional[Country] = None
 
+class ProfileInDB(Profile, DBModelMixin):
+    pass
+    
 class ProfileInResponse(RWModel):
     profile: Profile
