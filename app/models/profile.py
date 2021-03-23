@@ -16,7 +16,11 @@ class Profile(RWModel):
     country: Optional[Country] = None
 
 class ProfileInDB(Profile, DBModelMixin):
-    pass
-    
+    pass 
+
 class ProfileInResponse(RWModel):
     profile: Profile
+
+class ProfileInUpdate(RWModel):
+    old_profile: Profile
+    new_profile: Profile

@@ -16,7 +16,7 @@ async def retrieve_current_user(user: User = Depends(get_current_active_user)):
 async def update_current_user(
     user: UserInUpdate = Body(..., embed=True),
     current_user: User = Depends(get_current_active_user),
-    db: AsyncIOMotorClient = Depends(get_database),
+    db: AsyncIOMotorClient = Depends(get_database)
 ):
     if user.username == current_user.username:
         user.username = None
@@ -35,8 +35,8 @@ async def delete_current_user(
     db: AsyncIOMotorClient = Depends(get_database),
 ):
 
-    if user.email != current_user.email:
-        user.email = None
+    if user.username != current_user.username:
+        user.username = None
 
     dbuser = await delete_user(db, user)
     return UserInResponse(user=User(**dbuser.dict(), access_token=current_user.access_token))

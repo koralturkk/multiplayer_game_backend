@@ -36,7 +36,7 @@ class UserInResponse(RWModel):
     user: User
     
 class UserInLogin(RWModel):
-    email: EmailStr
+    username: str
     password: str
 
 class UserInCreate(UserInLogin):

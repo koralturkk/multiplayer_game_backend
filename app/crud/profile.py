@@ -7,17 +7,16 @@ from starlette.status import (
     HTTP_404_NOT_FOUND,
     HTTP_422_UNPROCESSABLE_ENTITY,
 )
-from crud.user import get_user
 from db.mongodb import AsyncIOMotorClient
 from core.config import database_name, followers_collection_name, users_collection_name, profiles_collection_name
-from models.profile import Profile, Country
-import datetime
+from models.profile import Profile, Country,ProfileInUpdate
+from datetime import datetime
 
 
-async def create_profile_for_user(conn: AsyncIOMotorClient, username: str, country : Country) -> ProfileInDB:
+async def create_profile_for_username(conn: AsyncIOMotorClient, username: str, country : Country) -> ProfileInDB:
 
     row = await conn[database_name][profiles_collection_name].find_one({"username": username})
-    if not row:
+    if row:
         raise HTTPException(
             status_code=HTTP_422_UNPROCESSABLE_ENTITY,
             detail="Username already has a profile",
@@ -28,17 +27,17 @@ async def create_profile_for_user(conn: AsyncIOMotorClient, username: str, count
         points = 0,
         country = country
         )
+
     dbprofile.created_at = datetime.now()
     dbprofile.updated_at = datetime.now()
 
-    row = await conn[database_name][profiles_collection_name].insert_one(dbprofile.dict())
-
-    dbprofile.id = row.inserted_id
+    inserted_row = await conn[database_name][profiles_collection_name].insert_one(dbprofile.dict())
+    dbprofile.id = str(inserted_row.inserted_id)
 
     return dbprofile
 
 
-async def get_profile_for_user(conn: AsyncIOMotorClient, username: str) -> ProfileInDB:
+async def get_profile_for_username(conn: AsyncIOMotorClient, username: str) -> ProfileInDB:
     
     row = await conn[database_name][profiles_collection_name].find_one({"username": username})
     if not row:
@@ -46,8 +45,31 @@ async def get_profile_for_user(conn: AsyncIOMotorClient, username: str) -> Profi
             status_code=HTTP_404_NOT_FOUND,
             detail="Profile does not exist",
         )
+    
+    dbprofile = ProfileInDB(**row)
+    dbprofile.id = str(row["_id"])
 
-    return ProfileInDB(**row)
+    return dbprofile
+
+
+async def update_profile_for_username(conn: AsyncIOMotorClient, username: str, country : Country) -> ProfileInDB:
+    old_profile = await get_profile_for_username(conn, username)
+    new_profile = ProfileInDB(**old_profile.dict())
+    new_profile.updated_at = datetime.now()
+    new_profile.country = country
+    await conn[database_name][profiles_collection_name].update_one({"username": old_profile.username}, {'$set': new_profile.dict()})
+    return ProfileInUpdate(old_profile = old_profile, new_profile = new_profile)
+
+
+
+async def delete_profile_for_username(conn: AsyncIOMotorClient, username: str) -> ProfileInDB:
+    dbprofile = await get_profile_for_username(conn, username)
+    try:
+        await conn[database_name][profiles_collection_name].delete_one({"username": dbprofile.username})
+    except Exception as e:
+        print(e)
+    return dbprofile
+
 
 
 # async def is_following_for_user(

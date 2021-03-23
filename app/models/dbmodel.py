@@ -10,4 +10,4 @@ class DateTimeModelMixin(BaseModel):
     updated_at: Optional[datetime] = Schema(None, alias="updatedAt")
 
 class DBModelMixin(DateTimeModelMixin):
-    id: Optional[int] = None
+    id: Optional[str] = None
