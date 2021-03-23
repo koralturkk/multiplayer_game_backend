@@ -9,7 +9,7 @@ from core.jwt import create_access_token
 from crud.shortcuts import check_free_username_and_email
 from crud.user import create_user, get_user_by_email,get_user
 from db.mongodb import AsyncIOMotorClient, get_database
-from models.user import User, UserInCreate, UserInLogin, UserInResponse
+from models.user import User, UserInRegister, UserInLogin, UserInResponse
 from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
 from models.token import Token
 
@@ -41,7 +41,7 @@ async def login(
     status_code=HTTP_201_CREATED,
 )
 async def register(
-        user: UserInCreate = Body(..., embed=True), db: AsyncIOMotorClient = Depends(get_database)
+        user: UserInRegister = Body(..., embed=True), db: AsyncIOMotorClient = Depends(get_database)
 ):
     await check_free_username_and_email(db, user.username, user.email)
 

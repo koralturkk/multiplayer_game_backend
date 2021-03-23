@@ -5,6 +5,7 @@ from crud.shortcuts import check_free_username_and_email
 from crud.user import update_user, delete_user
 from db.mongodb import AsyncIOMotorClient, get_database
 from models.user import User, UserInResponse, UserInUpdate, UserInLogin
+from crud.profile import delete_profile_for_username
 
 router = APIRouter(prefix="/user")
 
@@ -39,4 +40,5 @@ async def delete_current_user(
         user.username = None
 
     dbuser = await delete_user(db, user)
+    await delete_profile_for_username(conn = db, username = dbuser.username)
     return UserInResponse(user=User(**dbuser.dict(), access_token=current_user.access_token))

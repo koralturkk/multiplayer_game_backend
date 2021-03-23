@@ -2,7 +2,7 @@ from db.mongodb import AsyncIOMotorClient
 from pydantic import EmailStr
 from bson.objectid import ObjectId
 from core.config import database_name, users_collection_name
-from models.user import UserInCreate, UserInDB, UserInUpdate, UserInLogin, UserInDB, User
+from models.user import UserInRegister, UserInDB, UserInUpdate, UserInLogin, UserInDB, User
 from starlette.status import HTTP_201_CREATED, HTTP_400_BAD_REQUEST
 from starlette.exceptions import HTTPException
 from datetime import datetime
@@ -23,14 +23,14 @@ async def get_user_by_email(conn: AsyncIOMotorClient, email: EmailStr) -> UserIn
         dbuser.id = str(row["_id"])
         return dbuser
 
-async def create_user(conn: AsyncIOMotorClient, user: UserInCreate) -> UserInDB:
+async def create_user(conn: AsyncIOMotorClient, user: UserInRegister) -> UserInDB:
     dbuser = UserInDB(**user.dict())
     dbuser.change_password(user.password)
     dbuser.created_at = datetime.now()
     dbuser.updated_at = datetime.now()
 
-    row = await conn[database_name][users_collection_name].insert_one(dbuser.dict())
-    print(str(row["_id"]))
+    inserted_row = await conn[database_name][users_collection_name].insert_one(dbuser.dict())
+    dbuser.id = str(inserted_row.inserted_id)
 
     return dbuser
 
@@ -39,8 +39,7 @@ async def update_user(conn: AsyncIOMotorClient, username: str, user: UserInUpdat
 
     dbuser.username = user.username or dbuser.username
     dbuser.email = user.email or dbuser.email
-    dbuser.bio = user.bio or dbuser.bio
-    dbuser.image = user.image or dbuser.image
+
     if user.password:
         dbuser.change_password(user.password)
 

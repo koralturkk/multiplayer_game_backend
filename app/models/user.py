@@ -15,8 +15,6 @@ from .token import Token
 class UserBase(RWModel):
     username: str
     email: EmailStr
-    bio: Optional[str] = ""
-    image: Optional[str] = None
 
 class UserInDB(DBModelMixin, UserBase):
     salt: str = ""
@@ -39,12 +37,12 @@ class UserInLogin(RWModel):
     username: str
     password: str
 
-class UserInCreate(UserInLogin):
-    username: str
+
+
+class UserInRegister(UserInLogin):
+    email: EmailStr
 
 class UserInUpdate(RWModel):
     username: Optional[str] = None
     email: Optional[EmailStr] = None
     password: Optional[str] = None
-    bio: Optional[str] = None
-    image: Optional[str] = None

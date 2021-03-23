@@ -8,12 +8,12 @@ class Country(str, Enum):
     Turkey = 'TR'
     UnitedStates = 'US'
 
-
 class Profile(RWModel):
     username: str
     points: int = 0
-    following: Optional[List[str]] = []#
     country: Optional[Country] = None
+    bio: Optional[str] = ""
+    image: Optional[str] = None
 
 class ProfileInDB(Profile, DBModelMixin):
     pass 
@@ -24,3 +24,13 @@ class ProfileInResponse(RWModel):
 class ProfileInUpdate(RWModel):
     old_profile: Profile
     new_profile: Profile
+
+class ProfileInFollow(RWModel):
+    username: str
+    points: int
+
+class ProfileInDisplay(ProfileInDB):
+    follower_count: int
+    follower_list: List[str]
+    following_count: int
+    following_list: List[str]
