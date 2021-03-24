@@ -20,7 +20,7 @@ Description:
 - Different users interact with eachother through their profiles. 
 - A profile can follow and being followed by other profiles
 - A profile can obtain points by playing the game.
-- Different profiles can be ranked on the leaderboard. Information about players ranking can be obtained optionally by country can be accessed from the leaderboard.
+- Different profiles can be ranked on the leaderboard. Information about players ranking can be obtained optionally by country from the leaderboard.
 
 
 
