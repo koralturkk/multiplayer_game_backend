@@ -17,7 +17,7 @@ Description:
     * Country
     * Bio
     * Image
-- Different users interact with eachother through their profiles. 
+- Different users interact with each other through their profiles. 
 - A profile can follow and being followed by other profiles
 - A profile can obtain points by playing the game.
 - Different profiles can be ranked on the leaderboard. Information about players ranking can be obtained optionally by country from the leaderboard.
