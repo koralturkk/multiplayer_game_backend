@@ -13,8 +13,6 @@ from core.config import (
     profiles_collection_name)
 from models.profile import( 
     Country, 
-    ProfileInUpdate, 
-    ProfileInDB,
     ProfileInLeaderboard)
 from datetime import datetime
 

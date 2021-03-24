@@ -1,9 +1,6 @@
 
-from typing import Optional, List
-from fastapi.param_functions import Query
 from starlette.exceptions import HTTPException
 from starlette.status import (
-    HTTP_403_FORBIDDEN,
     HTTP_404_NOT_FOUND,
     HTTP_422_UNPROCESSABLE_ENTITY,
 )
@@ -14,8 +11,8 @@ from core.config import (
 from models.profile import( 
     Country, 
     ProfileInUpdate, 
-    ProfileInDB,
-    ProfileInLeaderboard)
+    ProfileInDB
+    )
 from datetime import datetime
 
 
@@ -104,9 +101,3 @@ async def add_points_to_profile(conn: AsyncIOMotorClient, current_username: str,
             detail=e
         )
 
-# async def is_following_for_user(
-#     conn: AsyncIOMotorClient, current_username: str, target_username: str
-# ) -> bool:
-#     count = await conn[database_name][followers_collection_name].count_documents({"follower": current_username,
-#                                                                                   "following": target_username})
-#     return count > 0
