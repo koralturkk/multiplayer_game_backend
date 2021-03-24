@@ -34,3 +34,6 @@ class ProfileInDisplay(ProfileInDB):
     follower_list: List[str]
     following_count: int
     following_list: List[str]
+
+class ProfileInLeaderboard(ProfileInFollow):
+    country: Country

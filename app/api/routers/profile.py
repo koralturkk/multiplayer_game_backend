@@ -6,6 +6,9 @@ from crud.profile import (
     get_profile_for_username,
     update_profile_for_username,
     delete_profile_for_username,
+    add_points_to_profile
+)
+from crud.follow import (
     follow_profile,
     unfollow_profile,
     is_following_profile,
@@ -14,6 +17,7 @@ from crud.profile import (
     get_following_list,
     get_following_count
 )
+
 from crud.user import verify_user
 from db.mongodb import AsyncIOMotorClient, get_database
 from models.profile import (
@@ -52,13 +56,6 @@ async def retrieve_user_profile(
     return profile_in_display
 
 
-# @router.get("/followers", response_model= ProfileInDB, tags=["profiles"])
-# async def retrieve_profile_followers(
-#     db: AsyncIOMotorClient=Depends(get_database),
-#     current_user: User=Depends(get_current_active_user)):
-#     db_profile=await get_profile_for_username(conn=db, username=current_user.username)
-#     return db_profile
-
 @router.post("", response_model=ProfileInDB, tags=["profiles"])
 async def create_user_profile(
     country: Country=Query(...), 
@@ -77,22 +74,6 @@ async def create_user_profile(
         image = image)
 
     return db_profile
-
-
-@router.delete("", response_model= ProfileInDB, tags= ["profiles"])
-async def delete_user_profile(
-    user : UserInLogin,
-    current_user: User= Depends(get_current_active_user),
-    db: AsyncIOMotorClient= Depends(get_database),
-):
-    #Checks for existing profile are made in CRUD
-    db_user= await verify_user(conn= db, user= user, current_user= current_user)
-    db_profile= await delete_profile_for_username(
-        username= db_user.username, 
-        conn= db)
-
-    return db_profile
-
 
 @router.put("", response_model= ProfileInUpdate, tags= ["profiles"])
 async def update_user_profile(
@@ -115,32 +96,29 @@ async def update_user_profile(
     return profileInUpdate
 
 
-@router.put("/{follow_username}", response_model= ProfileInFollow, tags= ["profiles"])
-async def follow_user_profile(
-    follow_username: str= Query(...), 
+
+@router.put("/{points}", response_model= ProfileInDB, tags= ["profiles"])
+async def add_points_to_user_profile(
+    points: int = Query(...),
     current_user: User= Depends(get_current_active_user),
     db: AsyncIOMotorClient= Depends(get_database),
 ):
-    is_following= await is_following_profile(conn= db, target_username= follow_username, current_username= current_user.username)
-    #Checks for existing profile are made in CRUD
-    if is_following:
-        return JSONResponse(status_code= 200, content= {"message": "Profile is already being followed"})
-
-    followed_profile= await follow_profile(conn= db, target_username= follow_username, current_username= current_user.username)
-    return followed_profile
+    db_profile = await get_profile_for_username(conn=db, username=current_user.username)
+    await add_points_to_profile(points = points, conn= db, current_username= db_profile.username)
+    updated_profile = await get_profile_for_username(conn=db, username=db_profile.username)
+    return updated_profile
 
 
-
-@router.put("/{unfollow_username}", response_model= ProfileInFollow, tags= ["profiles"])
-async def unfollow_user_profile(
-    unfollow_username: str= Query(...), 
+@router.delete("", response_model= ProfileInDB, tags= ["profiles"])
+async def delete_user_profile(
+    user : UserInLogin,
     current_user: User= Depends(get_current_active_user),
     db: AsyncIOMotorClient= Depends(get_database),
 ):
-    is_following= await is_following_profile(conn= db, target_username= unfollow_username, current_username= current_user.username)
     #Checks for existing profile are made in CRUD
-    if not is_following:
-        return JSONResponse(status_code= 404, content= {"message": "Profile is not being followed"})
+    db_user= await verify_user(conn= db, user= user, current_user= current_user)
+    db_profile= await delete_profile_for_username(
+        username= db_user.username, 
+        conn= db)
 
-    unfollowed_profile= await unfollow_profile(conn= db, target_username= unfollow_username, current_username= current_user.username)
-    return unfollowed_profile
+    return db_profile

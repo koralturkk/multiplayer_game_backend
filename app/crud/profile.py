@@ -10,15 +10,12 @@ from starlette.status import (
 from db.mongodb import AsyncIOMotorClient
 from core.config import (
     database_name, 
-    followers_collection_name, 
-    users_collection_name, 
     profiles_collection_name)
 from models.profile import( 
-    Profile, 
     Country, 
     ProfileInUpdate, 
-    ProfileInFollow,
-    ProfileInDB)
+    ProfileInDB,
+    ProfileInLeaderboard)
 from datetime import datetime
 
 
@@ -37,21 +34,22 @@ async def create_profile_for_username(
             detail="Username already has a profile",
         )
 
-    dbprofile = ProfileInDB(
+    db_profile = ProfileInDB(
         username = username,
         points = 0,
         country = country,
         bio = bio,
         image = image
         )
+        
 
-    dbprofile.created_at = datetime.now()
-    dbprofile.updated_at = datetime.now()
+    db_profile.created_at = datetime.now()
+    db_profile.updated_at = datetime.now()
 
-    inserted_row = await conn[database_name][profiles_collection_name].insert_one(dbprofile.dict())
-    dbprofile.id = str(inserted_row.inserted_id)
+    inserted_row = await conn[database_name][profiles_collection_name].insert_one(db_profile.dict())
+    db_profile.id = str(inserted_row.inserted_id)
 
-    return dbprofile
+    return db_profile
 
 
 async def get_profile_for_username(conn: AsyncIOMotorClient, username: str) -> ProfileInDB:
@@ -63,10 +61,10 @@ async def get_profile_for_username(conn: AsyncIOMotorClient, username: str) -> P
             detail="Profile does not exist",
         )
     
-    dbprofile = ProfileInDB(**row)
-    dbprofile.id = str(row["_id"])
+    db_profile = ProfileInDB(**row)
+    db_profile.id = str(row["_id"])
 
-    return dbprofile
+    return db_profile
 
 
 async def update_profile_for_username(
@@ -89,78 +87,23 @@ async def update_profile_for_username(
     return ProfileInUpdate(old_profile = old_profile, new_profile = new_profile)
 
 async def delete_profile_for_username(conn: AsyncIOMotorClient, username: str) -> ProfileInDB:
-    dbprofile = await get_profile_for_username(conn, username)
+    db_profile = await get_profile_for_username(conn, username)
     try:
-        await conn[database_name][profiles_collection_name].delete_one({"username": dbprofile.username})
+        await conn[database_name][profiles_collection_name].delete_one({"username": db_profile.username})
     except Exception as e:
         print(e)
-    return dbprofile
+    return db_profile
 
-async def follow_profile(
-    conn: AsyncIOMotorClient, 
-    current_username: str, 
-    target_username: str
-) -> ProfileInFollow:
-    target_profile = await get_profile_for_username(conn, target_username)
 
-    if target_profile:
-        await conn[database_name][followers_collection_name].insert_one({"follower": current_username,
-                                                                          "following": target_profile.username})
-    else:
+async def add_points_to_profile(conn: AsyncIOMotorClient, current_username: str, points: int):
+    try:
+        await conn[database_name][profiles_collection_name].update_one({"username": current_username}, {'$inc':{"points": points}})
+    except Exception as e:
         raise HTTPException(
-            status_code=HTTP_404_NOT_FOUND, detail=f"User {target_username} not found"
+            status_code=HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=e
         )
 
-    return ProfileInFollow(username= target_profile.username, points = target_profile.points)
-    
-
-
-async def get_follower_list(conn: AsyncIOMotorClient, current_username: str) -> List[str]:
-    cursor = conn[database_name][followers_collection_name].find({"following": current_username})
-
-    if not cursor:
-        followers = []
-    else:
-        followers = await cursor.distinct(key = "follower")
-
-    return followers
-
-
-async def get_following_list(conn: AsyncIOMotorClient, current_username: str) -> List[str]:
-    cursor = conn[database_name][followers_collection_name].find({"follower": current_username})
-
-    if not cursor:
-        following = []
-    else:
-        following = await cursor.distinct(key = "following")
-
-    return following
-
-
-async def get_followers_count(conn: AsyncIOMotorClient, current_username: str) -> int:
-    follower_count = await conn[database_name][followers_collection_name].count_documents({"following": current_username})
-    return follower_count
-
-
-async def get_following_count(conn: AsyncIOMotorClient, current_username: str) -> int:
-    following_count = await conn[database_name][followers_collection_name].count_documents({"follower": current_username})
-    return following_count
-
-
-async def unfollow_profile(conn: AsyncIOMotorClient, current_username: str, target_username: str) -> ProfileInFollow:
-    await conn[database_name][followers_collection_name].delete_many({"follower": current_username,
-                                                                     "following": target_username})
-
-
-async def is_following_profile(conn: AsyncIOMotorClient, current_username: str, target_username: str) -> bool:
-    row = await conn[database_name][followers_collection_name].find_one({
-                                                                        "follower": current_username,
-                                                                        "following": target_username
-                                                                        })
-    if row:
-        return True
-    else:
-        return False
 # async def is_following_for_user(
 #     conn: AsyncIOMotorClient, current_username: str, target_username: str
 # ) -> bool:
