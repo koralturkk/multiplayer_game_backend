@@ -1,14 +1,13 @@
-# MLDeployment
+# Deployment
 
-
-Aims:
+## Aims:
 
 * Deploying a python API using fastAPI
 * Containerize the application using Docker
 * Building a CI/CD pipeline using Github Actions
 * Build a MicroServices using Openshift
 
-Description:
+## Description:
 
 - The application is intended to replicate a mutliplayer social game backend
 - You can sign up as a user.
